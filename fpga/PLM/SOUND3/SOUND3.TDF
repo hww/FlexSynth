@@ -1,0 +1,592 @@
+INCLUDE"lpm_ram_dq.inc";
+INCLUDE"lpm_add_sub.inc";
+INCLUDE"lpm_mult.inc";
+INCLUDE"lpm_mux.inc";
+INCLUDE"lpm_compare.inc";
+INCLUDE"lpm_bustri.inc";
+INCLUDE"lpm_ff.inc";
+INCLUDE"lpm_shiftreg.inc";
+INCLUDE"lpm_decode.INC";
+
+SUBDESIGN sound3
+(
+% CPU Section %
+	D[7..0]	:BIDIR;
+	/CS		:INPUT;
+	/RD		:INPUT;
+	/WR		:INPUT;
+	A0		:INPUT;
+	A1		:INPUT;
+	CLK		:INPUT;
+	/RESET	:INPUT;
+% ROM Section %
+	MEM_A[9..0]:OUTPUT;	%Адреса%
+	MEM_D[7..0]:BIDIR;	%Данные%
+	/RAS	:OUTPUT;	
+	/CAS	:OUTPUT;
+	/W		:OUTPUT;
+	/G		:OUTPUT;
+% DAC Section %
+	SDO		:OUTPUT;	%DATA DAC%
+	SCK		:OUTPUT;	%CLK DAC%
+	SS		:OUTPUT;	%левый CS%
+	SS1		:OUTPUT;	%правый CS%
+	PAN0	:OUTPUT;
+	PAN1	:OUTPUT;
+	/DREQ	:OUTPUT;
+)
+%*******************************************************%
+%														%
+%*******************************************************%
+VARIABLE
+%*******************************************************%
+%	устройство синхронизации							%
+%*******************************************************%
+	tt		:MACHINE 
+			WITH STATES (t1,t2,t3,t4,t5,t6,t7,t8,t9,t10);	%тактовая последовательность%
+	nc[2..0]:DFF;		%номер канала%
+	chnum[2..0]	:NODE;	%номер канала%
+	delay[8..1]:DFF;
+	dt1,dt2,dt3,dt4,dt6,dt7,dt8,dt9	:NODE;
+	MEMA[2..0]	:NODE;
+	RESTART		:DFFE;
+	CARY		:DFFE;
+	EOF			:DFFE;
+	IFEOF,EQUAL	:NODE;
+	MMUX		:NODE;
+	RG_MEMA[9..0]:DFFE;
+	TRAS,TCAS,TG,TWR :DFF;
+	STATUS[7..0]	:DFFE;
+	DATA_IN[7..0]	:DFFE;
+%	VOL[4..0]	:DFFE;%
+	SAMPL[7..0]	:DFFE;
+%*******************************************************%
+%	Связь спроцессором 									%
+%*******************************************************%
+IX[19..0]		:DFFE;
+DATA[7..0]		:DFFE;
+NR[7..0]		:DFFE;
+LDIXH,LDIXM,LDIXL,INCIX	:NODE;
+D_ACCWR	:DFFE;
+D_ACCRD	:DFFE;
+%D_ACCMR	:DFFE;%
+%D_ACCMW	:DFF;%
+CYCL	:DFF;
+R_ACCWR	:DFFE;
+R_ACCMW	:DFFE;
+RG_WR	:NODE;
+BUSOUT	:JKFF;
+INCNR	:NODE;
+/RDWR	:NODE;
+DC8: lpm_decode 
+   WITH (LPM_WIDTH=3, LPM_DECODES=8, LPM_PIPELINE=1);
+%*******************************************************%
+%	Multiplexors										%
+%*******************************************************%
+MUXBD:lpm_mux WITH
+		 (LPM_WIDTH=8, LPM_SIZE=3, LPM_WIDTHS=2, LPM_PIPELINE=0);
+%*******************************************************%
+%	TRIDATABUS											%
+%*******************************************************%
+	TRICPUD:lpm_bustri  WITH (LPM_WIDTH=8);
+	TRIMEMD:lpm_bustri  WITH (LPM_WIDTH=8);
+%*******************************************************%
+%	Память внутренних регистров							%
+%*******************************************************%
+	RAM_MAIN:lpm_ram_dq WITH
+		 (LPM_WIDTH=8, LPM_WIDTHAD=7, LPM_NUMWORDS=128, 
+		  LPM_INDATA="REGISTERED", LPM_ADDRESS_CONTROL="REGISTERED",
+		  LPM_OUTDATA="UNREGISTERED",
+			LPM_FILE="Sound3HL.mif" );
+	RAM_L:lpm_ram_dq WITH
+		 (LPM_WIDTH=8, LPM_WIDTHAD=6, LPM_NUMWORDS=64, 
+		  LPM_INDATA="REGISTERED", LPM_ADDRESS_CONTROL="REGISTERED",
+		  LPM_OUTDATA="UNREGISTERED",
+			LPM_FILE="Sound3L.mif" );
+	RAM_H:lpm_ram_dq WITH
+		 (LPM_WIDTH=8, LPM_WIDTHAD=6, LPM_NUMWORDS=64, 
+		  LPM_INDATA="REGISTERED", LPM_ADDRESS_CONTROL="REGISTERED",
+		  LPM_OUTDATA="UNREGISTERED",
+			LPM_FILE="Sound3H.mif" );
+	MUXRAMD:lpm_mux WITH
+		 (LPM_WIDTH=16, LPM_SIZE=2, LPM_WIDTHS=1, LPM_PIPELINE=0);
+	MUXRAMA:lpm_mux WITH
+		 (LPM_WIDTH=6, LPM_SIZE=2, LPM_WIDTHS=1, LPM_PIPELINE=0);
+%*******************************************************%
+%	Регистры сигнального процессора						%
+%*******************************************************%
+RGX[15..0]	:DFFE;
+RGY[15..0]	:DFFE;
+RGZ[15..0]	:DFFE;
+LOOP		:NODE;
+ONOFF		:NODE;
+VOLUME[4..0]:NODE;
+PAGE[7..0]	:NODE;
+%*******************************************************%
+%	Компаратор и АЛУ сигнального процессора				%
+%*******************************************************%
+%COM----------------------------------------%
+	COMPARATOR:lpm_compare WITH 
+		 (LPM_WIDTH=16, LPM_REPRESENTATION="UNSIGNED",
+		 LPM_PIPELINE=0, CHAIN_SIZE=8, ONE_INPUT_IS_CONSTANT="NO");
+%ALU----------------------------------------%
+	ALU:lpm_add_sub WITH
+		 (LPM_WIDTH=16, LPM_REPRESENTATION="UNSIGNED",
+		  LPM_DIRECTION="ADD", LPM_PIPELINE=0);
+	ALUP:lpm_add_sub WITH
+		 (LPM_WIDTH=8, LPM_REPRESENTATION="UNSIGNED",
+		  LPM_DIRECTION="ADD", LPM_PIPELINE=0);
+%ALU2---------------------------------------%
+	ALU2:lpm_add_sub WITH
+		 (LPM_WIDTH=16, LPM_REPRESENTATION="SIGNED",
+		  LPM_DIRECTION="ADD", LPM_PIPELINE=0);
+%MULTIPLIER---------------------------------%
+	MULT:lpm_mult WITH
+		(LPM_WIDTHA=9,
+		 LPM_WIDTHB=4,
+		 LPM_WIDTHS=1,
+		 LPM_WIDTHP=13,
+		 LPM_REPRESENTATION="UNSIGNED",
+		 LPM_PIPELINE=3,
+		 USE_EAB="OFF");
+%ACCUM--------------------------------------%
+	ACCUM[15..0]:DFFE;									%Аккумулятор накопитель%
+	CODEC[9..0],CODECA[8..0]:NODE;
+	VALUE[13..0]:NODE;
+%*******************************************************%
+%	DAC interface										%
+%*******************************************************%
+	DIV2,DIV2O:DFF;
+%SHIFT--------------------------------------%
+	SHIFT:lpm_shiftreg  WITH (LPM_WIDTH=14, LPM_DIRECTION="LEFT");%Сдвигатель для ЦАПа%
+	LDAC	:NODE;
+	RGSS[1..0]:JKFF;
+%*******************************************************%
+%	Контроллер динамической памяти						%
+%*******************************************************%
+	MUXA:lpm_mux WITH
+		 (LPM_WIDTH=10, LPM_SIZE=4, LPM_WIDTHS=2, LPM_PIPELINE=0);
+BEGIN
+%*******************************************************%
+%	Интерфейс с процессором								%
+%*******************************************************%
+%	0	регистр данных доступа в память					%
+%	1	регистр управления на запись 					%
+%		xxxS xccc S=1 on S=0 off , ccc=CHANEL			%
+%		и регистр статуса на чтение						%
+%		bbbb bbbb b=1 канал работает 					%
+%	2	регистр данных доступа к внутренним регистрам	%
+%	3	irrr rrrr [rrrrrr=номера регистра 				%
+%				        i=autoincrement]				%
+%-------------------------------------------------------%
+%	канал 0												%
+%		RR0	 dma										%
+%		RR2	 dma end									%
+%		RR4	 dma loop									%
+%		 R6	 dma	page								%
+%		 R7  lxxv vvvv  l=loop,v=volume					%
+%		RR8	 k div										%
+%		RR10 st div										%
+%-------------------------------------------------------%
+%	канал 1												%
+%		RR0	 dma										%
+%		RR2	 dma end									%
+%       ...  ... ...
+
+%-------------------------------------------------------%
+%	другие регистры										%
+%		R12	(Low) адрес доступа в память				%
+%		R13	(Med) адрес доступа в память				%
+%		R14	(Hig) адрес доступа в память				%
+%*******************************************************%
+/RDWR=/RD AND /WR;
+%*******************************************************%
+% РЕГИСТР DATA %
+%*******************************************************%
+
+DATA[].clrn=/RESET;
+DATA[].clk=!/WR;
+DATA[].d=D[];
+DATA[].ena=!/CS;
+
+%*******************************************************%
+%	РЕГИСТР RRCH / номер регистра /						%
+%*******************************************************%
+
+NR[].clk=/RDWR;
+NR[].clrn=/RESET;
+
+INCNR=( !A0 & A1 & !/CS & NR[7]);
+
+IF INCNR THEN
+	NR[6..0].d=NR[6..0].q+1;
+	NR[7].d=NR[7].q;
+	NR[].ena=VCC;
+ELSE 
+	NR[].d=DATA[];
+	NR[].ena=( A1 & A0 & !/CS );
+END IF;
+
+%*******************************************************%
+%	РЕГИСТР RDATA / данные регистра /					%
+%*******************************************************%
+%---------------------- write --------------------------%
+R_ACCWR.d=NR[3..0] < 12;
+R_ACCWR.ena=(A1 & !A0 & !/CS);
+R_ACCWR.clk=!/WR;
+R_ACCWR.clrn=!R_ACCMW.q;
+
+R_ACCMW.clk=CLK;
+R_ACCMW.d=R_ACCWR.q;
+R_ACCMW.ena=dt4 or dt9 or R_ACCMW.q;
+RG_WR=R_ACCMW.q;
+%*******************************************************%
+% РЕГИСТР IX 											%
+%*******************************************************%
+
+IX[].clk=/RDWR;
+IX[].clrn=/RESET;
+
+LDIXL=(A1 & !A0 & (NR[3..0]==12) & !/CS);
+LDIXM=(A1 & !A0 & (NR[3..0]==13) & !/CS);
+LDIXH=(A1 & !A0 & (NR[3..0]==14) & !/CS);
+INCIX=( !A0 & !A1 & !/CS);
+
+	IF INCIX THEN
+		IX[19..0].d=IX[19..0].q+1;
+		IX[19..0].ena=VCC;
+	ELSE
+		IX[19..16].d=DATA[3..0];
+		IX[19..16].ena=LDIXH;
+		IX[15..8].d=DATA[];
+		IX[15..8].ena=LDIXM;
+		IX[7..0].d=DATA[];
+		IX[7..0].ena=LDIXL;
+	END IF;
+
+%*******************************************************%
+% ДОСТУП К РЕГИСТРУ DATA 								%
+%*******************************************************%
+%----------------------- RD ----------------------------%
+D_ACCRD.d=(!A1 & !A0 & !/CS);
+D_ACCRD.clk=!/RD;
+D_ACCRD.clrn=!CYCL.q;
+%----------------------- WR ----------------------------%
+D_ACCWR.d=(!A1 & !A0 & !/CS);
+D_ACCWR.clk=!/WR;
+D_ACCWR.clrn=!CYCL.q;
+
+%*******************************************************%
+% Формирователь тактов ожидания							%
+%*******************************************************%
+%WAIT%
+/DREQ=!(D_ACCWR.q or D_ACCRD.q or R_ACCWR.q );
+%*******************************************************%
+%	Интерфейс спроцессором на чтение					%
+%*******************************************************%
+	MUXBD.data[0][]=DATA_IN[].q;
+	MUXBD.data[1][]=STATUS[].q;
+	MUXBD.data[2][]=RAM_MAIN.q[];
+	MUXBD.sel[]=(A1,A0);
+% Буферные элементы   %
+	TRICPUD.data[]=MUXBD.result[];
+	TRICPUD.enabledt=(!/RD & !/CS);
+	D[]=TRICPUD.tridata[];
+
+%*******************************************************%
+%	Память внутренних регистров							%
+%*******************************************************%
+% мультиплексор адреса %
+
+MUXRAMA.data[0][] = ( chnum[2..0], MEMA[2..0] );
+MUXRAMA.data[1][] = ( NR[6..1].q );
+MUXRAMA.sel[]=RG_WR;
+
+% мультиплексор данных %
+
+MUXRAMD.data[0][]=( ALU.result[] );
+MUXRAMD.data[1][]=( DATA[7..0].q,DATA[7..0].q );
+MUXRAMD.sel[]=RG_WR;
+
+%собственно озу %
+
+RAM_H.inclock=!CLK;
+RAM_H.address[]=MUXRAMA.result[];
+RAM_H.data[]=MUXRAMD.result[15..8];
+RAM_H.we=(t3 or t9) or (RG_WR & NR[0]);
+
+RAM_L.inclock=!CLK;
+RAM_L.address[]=MUXRAMA.result[];
+RAM_L.data[]=MUXRAMD.result[7..0];
+RAM_L.we=(t3 or t9) or (RG_WR & !NR[0]);
+
+RAM_MAIN.inclock=!CLK;
+RAM_MAIN.address[]=( NR[6..0].q );
+RAM_MAIN.data[]=DATA[].q;
+RAM_MAIN.we=RG_WR;
+
+%*******************************************************%
+%	Регистры сигнального процессора						%
+%*******************************************************%
+RGX[].d=(RAM_H.q[] , RAM_L.q[]);
+RGY[].d=(RAM_H.q[],RAM_L.q[]);
+RGZ[].d=(RAM_H.q[],RAM_L.q[]);
+RGX[].clk=CLK;
+RGY[].clk=CLK;
+RGZ[].clk=CLK;
+RGX[].ena= dt1 or dt6 or RESTART.q;
+RGY[].ena= dt2 or dt7 ;
+RGZ[].ena= dt4;
+LOOP=RGZ[15].q;
+VOLUME[]=RGZ[12..8].q;
+PAGE[7..0] = RGZ[7..0];
+%*******************************************************%
+%	ALU сигнального процессора							%
+%*******************************************************%
+%Перенос прибавляется только если нет RESTART и EOF%
+ALU.cin=(CARY.q & !EOF & !RESTART);
+ALU.dataa[]=RGX[].q;
+ALU.datab[]= RGY[].q;
+RGY[].clrn=!t9;
+%устанавливается при LDA вычисление результата%
+CARY.d=(ALU.cout & ONOFF);
+CARY.clk=!CLK;
+CARY.ena= t3;
+CARY.clrn=!t1;
+%флаг RESTART устанавливается если операнды равны разрешено зацыкливание и CARY%
+COMPARATOR.dataa[]=RGX[];
+COMPARATOR.datab[]=RGY[];
+EQUAL=COMPARATOR.aeb;
+
+RESTART.d=(EQUAL & LOOP & CARY.q & !RESTART.q);
+RESTART.clk=!CLK;
+RESTART.ena=t8 or RESTART.q;
+%флаг EOF устанавливается если операнды равны+CARY и не разрешено зацыкливание%
+IFEOF=(EQUAL & !LOOP & CARY & !EOF.q);
+
+EOF.d=IFEOF;
+EOF.clk=!CLK;
+EOF.ena=t8 or EOF.q;
+
+DC8.data[]=chnum[2..0];
+DC8.enable=EOF;
+DC8.clock=CLK;
+DC8.aclr=!/RESET;
+%*******************************************************%
+%	ALU диспетчера памяти								%
+%*******************************************************%
+
+ALUP.dataa[]=PAGE[];
+ALUP.datab[]=(B"0000" ,RGX[15..12]);
+
+%*******************************************************%
+%	Мультиплексор диспетчера памяти						%
+%*******************************************************%
+
+MUXA.data[0][]=RGX[9..0];
+MUXA.data[1][]=(ALUP.result[7..0],RGX[11..10]);
+MUXA.data[2][]=IX[9..0];
+MUXA.data[3][]=(IX[19..10]);
+MUXA.sel[0]=MMUX;
+MUXA.sel[1]=t2 or t3;
+
+RG_MEMA[9..0]=MUXA.result[];
+RG_MEMA[].clk=!CLK;
+RG_MEMA[].ena=(t2 or t3 or t7 or t8);
+MEM_A[9..0]=RG_MEMA[9..0].q;
+
+%*******************************************************%
+%	буферные элементы диспетчера памяти					%
+%*******************************************************%
+
+TRIMEMD.data[]=DATA[].q;
+	TRIMEMD.enabledt=BUSOUT.q;
+	MEM_D[]=TRIMEMD.tridata[];
+
+IF ONOFF THEN
+	SAMPL[].d=MEM_D[7..0];
+ELSE
+	SAMPL[].d=B"00000000";
+END IF;
+	SAMPL[].clk=!CLK;
+	SAMPL[].ena=t9;
+DATA_IN[].d=MEM_D[];
+	DATA_IN[].clk=!CLK;
+	DATA_IN[].ena=t4; 
+%*******************************************************%
+%	RAS/CAS/MMUX диспетчера памяти						%
+%*******************************************************%
+MMUX=dt2 or dt7;
+
+TRAS.d=dt1 or dt4 or dt6 or dt9;
+TCAS.d=dt1 or dt2 or dt6 or dt7;
+%TG = !(( dt3 & M_RD ) or dt8) ;%
+TG = !(( dt3 & D_ACCRD ) or dt8) ;
+TWR= !( dt3 & BUSOUT.q ) ;
+CYCL.d = ( t4 & (!TWR.Q or !TG.Q));
+CYCL.clk = !CLK;
+
+TRAS.clk=CLK;
+TCAS.clk=CLK;
+TG.clk=CLK;
+TWR.CLK=CLK;
+
+/RAS=TRAS.q;
+/CAS=TCAS.q;
+/G=TG.q;
+/W= TWR.Q;
+
+%--------------------- busout --------------------------%
+
+BUSOUT.clk=!CLK;
+BUSOUT.j=t3 and D_ACCWR.q;
+BUSOUT.k=t5;
+
+%*******************************************************%
+%	C O M P A N D E R									%
+%*******************************************************%
+
+CODEC[9]=SAMPL[7].q;
+
+CASE SAMPL[6..5].q IS
+	WHEN 0 =>
+		CODECA[8..0] = (0,0,0,1,SAMPL[4..0].q);
+	WHEN 1 =>
+		CODECA[8..0] = (0,0,1,SAMPL[4..0].q,0);
+	WHEN 2 =>
+		CODECA[8..0] = (0,1,SAMPL[4..0].q,0,0);
+	WHEN OTHERS =>
+		CODECA[8..0] = (1,SAMPL[4..0].q,0,0,0);
+END CASE;
+	CODEC[8..0]= CODECA[8..0] - 32;
+%*******************************************************%
+%	M U L												%
+%*******************************************************%
+
+MULT.clock=!CLK;
+MULT.dataa[]=CODEC[8..0];
+MULT.datab[]=VOLUME[4..1];
+VALUE[12..0]=MULT.result[];
+VALUE[13]=CODEC[9] & (MULT.RESULT[] != 0);
+
+ALU2.cin=GND;
+IF VALUE[13] THEN
+	ALU2.dataa[15..0]=(1,1,1,!VALUE[12..0]);
+ELSE
+	ALU2.dataa[15..0]=(0,0,0, VALUE[12..0]);
+END IF;
+
+ALU2.datab[15..0]=ACCUM[].q;
+
+ACCUM[].clk=!CLK;
+ACCUM[].d=ALU2.result[15..0];
+ACCUM[].ena=t3;
+ACCUM[].clrn=!(t2 & (chnum[1..0]==1));
+
+%*******************************************************%
+%	DAC Interface										%
+%*******************************************************%
+
+DIV2.d=!DIV2.q or dt1;
+DIV2.clk=CLK;
+DIV2O.d=!DIV2.q;
+DIV2O.clk=!CLK;
+
+LDAC=(chnum[1..0]==0) & t10;
+
+SHIFT.shiftin=GND;
+SHIFT.enable=DIV2.q;
+SHIFT.clock=!CLK;
+SHIFT.load=LDAC;
+SHIFT.data[]=(!ACCUM[15].q,ACCUM[14..2].q);
+%SHIFT.data[]=(!ACCUM[15].q,ACCUM[13..1].q);%
+SDO=SHIFT.shiftout;
+
+SCK=DIV2O.q;
+
+	RGSS[].clk=!CLK;
+	RGSS[0].K=LDAC;
+	RGSS[0].J=(chnum[1..0]==0) & t2;
+	RGSS[1].J=(chnum[2..0]==4) & t2;
+	RGSS[1].k=(chnum[2..0]==0) & t2;
+
+SS=RGSS[0].q;
+SS1=GND;
+PAN0=RGSS[1].q;	% временно %
+PAN1=gnd; %!RGSS[1].q;% 
+%*******************************************************%
+%	Регистр управления кананлами						%
+%*******************************************************%
+% Выключение канала %
+	STATUS[].ena=(A0 & !A1 & !/CS);
+	STATUS[].clk=!/WR;
+	STATUS[].d=D[];
+
+	FOR n IN 0 TO 7 GENERATE
+	
+		STATUS[n].clrn=/RESET & !DC8.EQ[n];
+
+	END GENERATE;
+
+% Управление вкл-выкл каналов %
+	CASE chnum[] IS
+		WHEN 0 => ONOFF=STATUS[0].q;
+		WHEN 1 => ONOFF=STATUS[1].q;
+		WHEN 2 => ONOFF=STATUS[2].q;
+		WHEN 3 => ONOFF=STATUS[3].q;
+		WHEN 4 => ONOFF=STATUS[4].q;
+		WHEN 5 => ONOFF=STATUS[5].q;
+		WHEN 6 => ONOFF=STATUS[6].q;
+		WHEN 7 => ONOFF=STATUS[7].q;
+	END CASE;
+
+%*******************************************************%
+%	Тактовый генератор сигнального процессора			%
+%*******************************************************%
+
+tt.clk=CLK;
+tt.reset=!/RESET;
+CASE tt IS
+	WHEN t1 => tt=t2;
+	WHEN t2 => tt=t3;
+	WHEN t3 => tt=t4;
+	WHEN t4 => tt=t5;
+	WHEN t5 => tt=t6;
+	WHEN t6 => tt=t7;
+	WHEN t7 => tt=t8;
+	WHEN t8 => tt=t9;
+	WHEN t9 => tt=t10;
+	WHEN t10 => tt=t1;
+END CASE;
+
+delay[].d=(t1,t2,t3,t4,t6,t7,t8,t9);
+delay[].clk=!CLK;
+(dt1,dt2,dt3,dt4,dt6,dt7,dt8,dt9)=delay[].q;
+
+%  Номер канала %
+	nc[].clrn=/RESET;
+	nc[].clk=CLK;
+	chnum[2..0]=nc[2..0].q;
+	IF tt==t10 THEN
+		nc[].d=nc[].q+1;
+	ELSE
+		nc[].d=nc[].q;
+	END IF;
+
+% Циклы %
+
+TABLE
+	tt	=>	MEMA[2..0]	;
+	t1	=>	5			;%KF			->	RGX%
+	t2	=>	6			;%STF RD		->	RGY%
+	t3	=>	6			;%STF WR%
+	t4	=>	3			;%PAGE/VOL RD	->	RGZ%
+	t5	=>	X			;%CPU RG%
+	t6	=>	0			;%DMA RD		->	RGX%
+	t7	=>	2			;%EOF RD		->	RGY%
+	t8	=>	1			;%LOOP RD		->	RGY%
+	t9	=>	0			;%DMA WR% 
+	t10	=>	X			;%CPU RG%
+END TABLE;
+
+END;

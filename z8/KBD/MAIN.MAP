@@ -1,0 +1,270 @@
+Zilog Linkage Editor.  Version 2.00    30-Jul-98    11:21:39   Page:    1
+
+LINK MAP:
+
+Date:      Thu Jul 30 11:21:39 1998
+Processor: Z8
+Files:     [Command] main.cmd
+           [Object ] main.O
+
+COMMAND LIST:
+=============
+     1: -a -g -mmain.map -omain.hex main.cmd 
+     2: main.O
+     3: RANGE RFILE 0:%EF
+     4: 
+Zilog Linkage Editor.  Version 2.00    30-Jul-98    11:21:39   Page:    2
+
+SPACE ALLOCATION:
+=================
+
+Space                            Base     Top      Span    
+-------------------------------- -------- -------- --------
+ROM                              00000000 0000038C      38Dh
+RFILE                            00000000 0000008F       90h
+
+SEGMENTS WITHIN SPACE:
+======================
+
+ROM                              Type        Base     Top      Span     
+-------------------------------- ----------- -------- -------- -------- 
+ICODE                            absolute    00000000 0000038C      38Dh
+
+RFILE                            Type        Base     Top      Span     
+-------------------------------- ----------- -------- -------- -------- 
+IDATA                            absolute    00000000 0000008F       90h
+
+Zilog Linkage Editor.  Version 2.00    30-Jul-98    11:21:39   Page:    3
+
+SEGMENTS WITHIN MODULES:
+========================
+
+Module: main.s (File: main.O) Thu Jul 30 11:21:39 1998
+
+         Name                             Base     Top      Size     
+         -------------------------------- -------- -------- -------- 
+Segment: ICODE                            00000000 0000038C      909
+Segment: IDATA                            00000000 0000008F      144
+
+Zilog Linkage Editor.  Version 2.00    30-Jul-98    11:21:39   Page:    4
+
+EXTERNAL DEFINITIONS BY ADDRESS:
+================================
+
+Symbol                           Address  Module       Segment                         
+-------------------------------- -------- ------------ --------------------------------
+START                            0000000C main.s       ICODE
+DIE                              0000003E main.s       ICODE
+DUMMY                            00000044 main.s       ICODE
+MAININIT                         00000045 main.s       ICODE
+SCANER_INIT                      00000050 main.s       ICODE
+SCANER                           0000007A main.s       ICODE
+PRS1                             000000D1 main.s       ICODE
+PRS2                             000000F2 main.s       ICODE
+UP1                              0000011B main.s       ICODE
+SCAN_MATRIX                      00000147 main.s       ICODE
+PLUS_FIFO                        00000179 main.s       ICODE
+CREAT_FIFO                       000001A4 main.s       ICODE
+CLR_FIFO                         000001B4 main.s       ICODE
+ADC3_INIT                        000001C4 main.s       ICODE
+ADC3                             000001DD main.s       ICODE
+KEYS3                            00000214 main.s       ICODE
+ADC_START                        0000024E main.s       ICODE
+ADC_READ                         0000025D main.s       ICODE
+INT3                             0000026B main.s       ICODE
+SER_INIT                         00000272 main.s       ICODE
+SEND_2BYTE                       0000028E main.s       ICODE
+T0_INT                           000002B8 main.s       ICODE
+SRCH2SEND                        000002F0 main.s       ICODE
+SEND_FIFO                        00000353 main.s       ICODE
+NUM                              00000020 main.s       IDATA
+TIME                             0000002A main.s       IDATA
+FLAG_S                           00000034 main.s       IDATA
+FREE                             0000003E main.s       IDATA
+DBASE                            00000040 main.s       IDATA
+MX1                              00000071 main.s       IDATA
+MX2                              00000078 main.s       IDATA
+LINE                             0000007F main.s       IDATA
+MASK                             00000080 main.s       IDATA
+AN_SEL                           00000081 main.s       IDATA
+U                                00000082 main.s       IDATA
+UL                               00000086 main.s       IDATA
+FL                               0000008A main.s       IDATA
+K_SH                             0000008E main.s       IDATA
+K_F                              0000008F main.s       IDATA
+RG_SCC                           00000000 main.s       (unknown)
+TEST                             00000000 main.s       (unknown)
+TESTK                            00000000 main.s       (unknown)
+HIST                             00000002 main.s       (unknown)
+IRQ2                             00000004 main.s       (unknown)
+FIFO_S                           0000000A main.s       (unknown)
+BITCOUNTM                        0000000C main.s       (unknown)
+RG_MAIN                          00000010 main.s       (unknown)
+REF                              00000010 main.s       (unknown)
+SP_MAIN                          000000EF main.s       (unknown)
+P_ANSEL                          445B2BEE main.s       (unknown)
+PORTREF                          445B2BEE main.s       (unknown)
+PR0                              445B2C0E main.s       (unknown)
+PR1                              445B2C16 main.s       (unknown)
+BITCOUNT                         445B2C2E main.s       (unknown)
+TXDATA                           445B2C36 main.s       (unknown)
+Zilog Linkage Editor.  Version 2.00    30-Jul-98    11:21:39   Page:    5
+
+Symbol                           Address  Module       Segment                         
+-------------------------------- -------- ------------ --------------------------------
+TXDATA1                          445B2C3E main.s       (unknown)
+TXDATA2                          445B2C46 main.s       (unknown)
+PR2                              445B2C4E main.s       (unknown)
+RESULT                           445B2C5E main.s       (unknown)
+DELAY                            445B2C66 main.s       (unknown)
+
+   60 External symbols.
+Zilog Linkage Editor.  Version 2.00    30-Jul-98    11:21:39   Page:    6
+
+EXTERNAL DEFINITIONS BY NAME:
+=============================
+
+Symbol                           Address  Module       Segment                         
+-------------------------------- -------- ------------ --------------------------------
+ADC3                             000001DD main.s       ICODE
+ADC3_INIT                        000001C4 main.s       ICODE
+ADC_READ                         0000025D main.s       ICODE
+ADC_START                        0000024E main.s       ICODE
+AN_SEL                           00000081 main.s       IDATA
+BITCOUNT                         445B2C2E main.s       (unknown)
+BITCOUNTM                        0000000C main.s       (unknown)
+CLR_FIFO                         000001B4 main.s       ICODE
+CREAT_FIFO                       000001A4 main.s       ICODE
+DBASE                            00000040 main.s       IDATA
+DELAY                            445B2C66 main.s       (unknown)
+DIE                              0000003E main.s       ICODE
+DUMMY                            00000044 main.s       ICODE
+FIFO_S                           0000000A main.s       (unknown)
+FL                               0000008A main.s       IDATA
+FLAG_S                           00000034 main.s       IDATA
+FREE                             0000003E main.s       IDATA
+HIST                             00000002 main.s       (unknown)
+INT3                             0000026B main.s       ICODE
+IRQ2                             00000004 main.s       (unknown)
+K_F                              0000008F main.s       IDATA
+K_SH                             0000008E main.s       IDATA
+KEYS3                            00000214 main.s       ICODE
+LINE                             0000007F main.s       IDATA
+MAININIT                         00000045 main.s       ICODE
+MASK                             00000080 main.s       IDATA
+MX1                              00000071 main.s       IDATA
+MX2                              00000078 main.s       IDATA
+NUM                              00000020 main.s       IDATA
+P_ANSEL                          445B2BEE main.s       (unknown)
+PLUS_FIFO                        00000179 main.s       ICODE
+PORTREF                          445B2BEE main.s       (unknown)
+PR0                              445B2C0E main.s       (unknown)
+PR1                              445B2C16 main.s       (unknown)
+PR2                              445B2C4E main.s       (unknown)
+PRS1                             000000D1 main.s       ICODE
+PRS2                             000000F2 main.s       ICODE
+REF                              00000010 main.s       (unknown)
+RESULT                           445B2C5E main.s       (unknown)
+RG_MAIN                          00000010 main.s       (unknown)
+RG_SCC                           00000000 main.s       (unknown)
+SCAN_MATRIX                      00000147 main.s       ICODE
+SCANER                           0000007A main.s       ICODE
+SCANER_INIT                      00000050 main.s       ICODE
+SEND_2BYTE                       0000028E main.s       ICODE
+SEND_FIFO                        00000353 main.s       ICODE
+SER_INIT                         00000272 main.s       ICODE
+SP_MAIN                          000000EF main.s       (unknown)
+SRCH2SEND                        000002F0 main.s       ICODE
+START                            0000000C main.s       ICODE
+T0_INT                           000002B8 main.s       ICODE
+TEST                             00000000 main.s       (unknown)
+TESTK                            00000000 main.s       (unknown)
+TIME                             0000002A main.s       IDATA
+TXDATA                           445B2C36 main.s       (unknown)
+Zilog Linkage Editor.  Version 2.00    30-Jul-98    11:21:39   Page:    7
+
+Symbol                           Address  Module       Segment                         
+-------------------------------- -------- ------------ --------------------------------
+TXDATA1                          445B2C3E main.s       (unknown)
+TXDATA2                          445B2C46 main.s       (unknown)
+U                                00000082 main.s       IDATA
+UL                               00000086 main.s       IDATA
+UP1                              0000011B main.s       ICODE
+
+   60 External symbols.
+Zilog Linkage Editor.  Version 2.00    30-Jul-98    11:21:39   Page:    8
+
+SYMBOL CROSS REFERENCE:
+=======================
+
+Symbol                           Module       Use        
+-------------------------------- ------------ ---------- 
+ADC3                             main.s       Definition
+ADC3_INIT                        main.s       Definition
+ADC_READ                         main.s       Definition
+ADC_START                        main.s       Definition
+AN_SEL                           main.s       Definition
+BITCOUNT                         main.s       Definition
+BITCOUNTM                        main.s       Definition
+CLR_FIFO                         main.s       Definition
+CREAT_FIFO                       main.s       Definition
+DBASE                            main.s       Definition
+DELAY                            main.s       Definition
+DIE                              main.s       Definition
+DUMMY                            main.s       Definition
+FIFO_S                           main.s       Definition
+FL                               main.s       Definition
+FLAG_S                           main.s       Definition
+FREE                             main.s       Definition
+HIST                             main.s       Definition
+INT3                             main.s       Definition
+IRQ2                             main.s       Definition
+K_F                              main.s       Definition
+K_SH                             main.s       Definition
+KEYS3                            main.s       Definition
+LINE                             main.s       Definition
+MAININIT                         main.s       Definition
+MASK                             main.s       Definition
+MX1                              main.s       Definition
+MX2                              main.s       Definition
+NUM                              main.s       Definition
+P_ANSEL                          main.s       Definition
+PLUS_FIFO                        main.s       Definition
+PORTREF                          main.s       Definition
+PR0                              main.s       Definition
+PR1                              main.s       Definition
+PR2                              main.s       Definition
+PRS1                             main.s       Definition
+PRS2                             main.s       Definition
+REF                              main.s       Definition
+RESULT                           main.s       Definition
+RG_MAIN                          main.s       Definition
+RG_SCC                           main.s       Definition
+SCAN_MATRIX                      main.s       Definition
+SCANER                           main.s       Definition
+SCANER_INIT                      main.s       Definition
+SEND_2BYTE                       main.s       Definition
+SEND_FIFO                        main.s       Definition
+SER_INIT                         main.s       Definition
+SP_MAIN                          main.s       Definition
+SRCH2SEND                        main.s       Definition
+START                            main.s       Definition
+T0_INT                           main.s       Definition
+TEST                             main.s       Definition
+TESTK                            main.s       Definition
+TIME                             main.s       Definition
+TXDATA                           main.s       Definition
+Zilog Linkage Editor.  Version 2.00    30-Jul-98    11:21:39   Page:    9
+
+Symbol                           Module       Use        
+-------------------------------- ------------ ---------- 
+TXDATA1                          main.s       Definition
+TXDATA2                          main.s       Definition
+U                                main.s       Definition
+UL                               main.s       Definition
+UP1                              main.s       Definition
+
+End of link map:
+================
+    0 Warnings
+    0 Errors

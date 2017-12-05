@@ -1,0 +1,108 @@
+	SECTION	WORK
+NET_MARK:	DB	0	; 7BIT=1 “† ……„€’ €…
+NET_MODE:	DB	0	; 0 wait 1 receiv 2-3 γη¥­¨ª
+NET_FIFOR:	DB	0,0     ; HEAD , LAST
+		DB	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+NET_FIFOW:	DB	0,0
+		DB	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+
+	SECTION	ICODE
+NET_MARKER:
+		OR	80H		; ”‹€ƒ €…€
+		LD	(NET_MARK),A
+		CALL	FIFO_CLR
+		LD	A,1		; €’€
+		LD	(NET_MODE),A	; “—’…‹ €’€
+		CALL	CRTS0
+                RET
+FIFO_CLR:
+		XOR	A
+		LD	(NET_FIFOR),A
+		LD	(NET_FIFOW),A
+		LD	(NET_FIFOR+1),A
+		LD	(NET_FIFOW+1),A
+                RET
+
+; „€‰‚… ‘•€…’ ”€–
+
+NET_RECEIVWR:
+		PUSH	DE
+        	PUSH	HL
+		LD	E,A
+		LD	HL,NET_FIFOR
+		CALL	FIFO_WR
+		POP	HL
+		POP	DE
+		OR	A
+		RET
+
+; „€‰‚… —’€…’ ”€–
+NET_SENDRD:
+        	PUSH	HL
+		LD	HL,NET_FIFOW
+		CALL	FIFO_RD
+		POP	HL
+		OR	A
+		RET
+; ƒ€€ ‘›‹€…’
+NET_SENDWR:
+		PUSH	DE
+        	PUSH	HL
+		LD	E,A
+		LD	HL,NET_FIFOW
+		CALL	FIFO_RD
+		POP	HL
+		POP	DE
+		OR	A
+		RET
+
+; ƒ€€ —’€…’ ”€–
+
+NET_RECEIVRD:
+        	PUSH	HL
+		LD	HL,NET_FIFOR
+		CALL	FIFO_RD
+		POP	HL
+		OR	A
+		RET
+
+FIFO_RD:
+		LD	A,(HL)  	; “„€ ‹†’ €‰’
+		INC	HL
+		CP	(HL)		; £„…  „‹†… ‚‡’
+		SCF                     ; CF=1
+		RET	Z		; Z …’“ €‰’‚
+
+		LD	A,(HL)
+		INC	A
+		AND	0FH
+		LD	(HL),A
+		ADD	L
+		LD	L,A
+		XOR	A
+		ADC	H
+		LD	H,A		; HL + A
+		LD	A,(HL)
+		OR	A		; CF=0
+		RET
+
+FIFO_WR:
+		LD	A,(HL)  	; “„€ ‹†’ €‰’
+		INC	HL
+		INC	A
+		AND	0FH
+		CP	(HL)		; £„…  „‹†… ‚‡’
+		SCF                     ; CF=1
+		RET	Z		; Z …’“ €‰’‚
+
+		DEC	HL
+		LD	(HL),A
+		INC	HL
+		ADD	L
+		LD	L,A
+		XOR	A
+		ADC	H
+		LD	H,A		; HL + A
+		LD	(HL),E
+		OR	A		; CF=0
+		RET

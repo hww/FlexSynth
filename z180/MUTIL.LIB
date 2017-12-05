@@ -1,0 +1,175 @@
+;	.Z800
+;**************************************************************
+;
+;  List 3.3   utility.mac
+;
+;   these routines are used in other programs
+;
+;   GETARG, STOHEX, PUTHEX, PUTCHR, DUMP8B
+;
+;**************************************************************
+;
+;	PUBLIC	GETARG		;Note: Five utility routines included in
+;	PUBLIC	STOHEX		;      this program list will be used in
+;	PUBLIC	PUTHEX		;      sample programs later.
+;	PUBLIC	PUTCHR
+;	PUBLIC	DUMP8B
+
+BDOS:	EQU	0005H
+DMA:	EQU	0080H
+
+;----- DE := address of arg(A)'s copy -----
+
+GETARG: PUSH	AF		;Note: Nth parameter (N is specified by
+	PUSH	BC		;      A register) of the command line
+	PUSH	HL		;      stored in default DMA area
+				;      (0080H to ) is loaded in memory and
+	LD	C,A		;      its starting address is returned in
+	LD	HL,DMA		;      DE register.
+	LD	B,(HL)
+	INC	HL
+	INC	B
+
+SKPARG: DEC	B
+	JR	NZ,NOARG
+SKP1:	LD	A,(HL)
+	INC	HL
+	CALL	TRMCHK
+	JR	NZ,SKP1
+SKP2:	LD	A,(HL)
+	INC	HL
+	CALL	TRMCHK
+	JR	Z,SKP2
+	DEC	HL
+	DEC	C
+	JR	NZ,SKPARG
+
+CPYARG: LD	DE,BUFMEM
+CPY1:	LD	A,(HL)
+	LD	(DE),A
+	INC	HL
+	INC	DE
+	CALL	TRMCHK
+	JR	NZ,CPY1
+
+	DEC	DE
+	LD	A,"$"
+	LD	(DE),A
+	LD	DE,BUFMEM
+	JR	EXIT
+
+NOARG:	LD	DE,BUFMEM
+	LD	A,"$"
+	LD	(DE),A
+
+EXIT:	POP	HL
+	POP	BC
+	POP	AF
+	RET
+
+TRMCHK: CP	09H
+	RET	Z
+	CP	0DH
+	RET	Z
+	CP	" "
+	RET	Z
+	CP	";"
+	RET
+
+;----- HL := hexadecimal value of [DE] -----
+
+STOHEX: PUSH	AF		;Note: Hexadecimal string indicated by
+	PUSH	DE		;      DE register is converted into
+	LD	HL,0000H	;      two-byte integer and stored in
+	CALL	STOH1		;      HL register.
+	POP	DE
+	POP	AF
+	RET
+
+STOH1:	LD	A,(DE)
+	INC	DE
+	SUB	"0"
+	RET	C
+	CP	10
+	JR	C,STOH2
+	SUB	"A"-"0"
+	RET	C
+	CP	6
+	RET	NC
+	ADD	A,10
+
+STOH2:	ADD	HL,HL
+	ADD	HL,HL
+	ADD	HL,HL
+	ADD	HL,HL
+	OR	L
+	LD	L,A
+	JR	STOH1
+
+;----- print A-reg, in hexadecimal form (00-FF) -----
+
+PUTHEX: PUSH	AF		;Note: Contents of A register is displayed
+	RR	A		;      using two hexadecimal digits.
+	RR	A
+	RR	A
+	RR	A
+	CALL	PUTHX1
+	POP	AF
+PUTHX1: PUSH	AF
+	AND	0FH
+	CP	10
+	JR	C,PUTHX2
+	ADD	A,"A"-10-"0"
+PUTHX2: ADD	A,"0"
+	CALL	PUTCHR
+	POP	AF
+	RET
+
+;----- put character -----
+
+PUTCHR: PUSH	AF
+	PUSH	BC
+	PUSH	DE
+	PUSH	HL
+	LD	E,A
+	LD	C,02H
+	CALL	BDOS
+	POP	HL
+	POP	DE
+	POP	BC
+	POP	AF
+	RET
+
+;----- dumps 8bytes of [HL] to [HL+7] in hexa & ASCII form -----
+
+DUMP8B: PUSH	HL		;Note: Contents of eight bytes after the
+	LD	B,8		;      address indicated in HL register
+DUMP1:	LD	A,(HL)		;      are dumped in both hexadecimal
+	INC	HL		;      and character codes.
+	CALL	PUTHEX
+	LD	A," "
+	CALL	PUTCHR
+	DJNZ	DUMP1
+	POP	HL
+	LD	B,8
+DUMP2:	LD	A,(HL)
+	INC	HL
+	CP	20H
+	JR	C,DUMP3
+	CP	7FH
+	JR	NZ,DUMP4
+DUMP3:	LD	A,"."
+DUMP4:	CALL	PUTCHR
+	DJNZ	DUMP2
+	LD	A,0DH
+	CALL	PUTCHR
+	LD	A,0AH
+	CALL	PUTCHR
+	RET
+
+;----- work area -----
+
+BUFMEM: DS	256
+
+;	END
+

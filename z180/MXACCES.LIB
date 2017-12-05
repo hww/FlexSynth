@@ -1,0 +1,77 @@
+	SECTION	MCODE
+
+;**********************************************
+; СВЯЗЬ С DSP
+; Функция связи с дсп имеет следующие модули
+;	XBIOS	вызов функции XBIOS
+;	.IN	ввод в порт
+;	.OUT	вывод в порт
+;	.L
+;**********************************************
+
+;	PUBLIC	XBIOS
+;	PUBLIC	.IN
+;	PUBLIC	.OUT
+
+
+
+CSLT	EQU	1	; слот связи карта связи
+
+mCOMAND	EQU	4000H	; регистр команд
+mMA	EQU	4001H	; акумулятор
+mMHL	EQU	4002H	; HL
+mMDE	EQU	4004H	; DE
+mMBC	EQU	4006H	; BC
+
+;**********************************************
+; вызов функции XBIOS
+;**********************************************
+
+XACCES:
+	DI
+	PUSH	AF
+	IN	A,(0A8H)
+	LD	(FSLT),A
+	AND	0F3H		; X0XX
+	OR	004H		; X1XX комуникационный слот
+	OUT	(0A8H),A
+	POP	AF
+	
+	LD	(mMA),A
+	LD	(mMHL),HL
+	LD	(mMDE),DE
+	LD	(mMBC),BC	; передадим регистры
+
+	EX	(SP),HL
+	LD	A,(HL)
+	LD	(mCOMAND),A	; дадим команду
+	INC	HL
+	EX	(SP),HL
+
+	CALL	WAIT
+
+	LD	A,(mMA)
+	LD	H,A
+	LD	A,(mMBC+2)
+	LD	L,A
+	PUSH	HL
+	POP	AF
+	LD	HL,(mMHL)
+	LD	DE,(mMDE)
+	LD	BC,(mMBC)	; прочитаем регистры
+
+	PUSH	AF
+	LD	A,(FSLT)
+	OUT	(0A8H),A	; востановим слот
+	POP	AF
+	EI
+	RET
+
+WAIT:
+	LD	A,(mCOMAND)	; ожидание готовности
+	AND	0FH
+	RET	Z
+	JR	WAIT
+
+FSLT:	DB			; временное сохранение слота
+	NOP
