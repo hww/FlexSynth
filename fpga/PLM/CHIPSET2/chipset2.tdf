@@ -1,18 +1,18 @@
-TITLE "Управление перефериными устройствами";
+TITLE "РЈРїСЂР°РІР»РµРЅРёРµ РїРµСЂРµС„РµСЂРёРЅС‹РјРё СѓСЃС‚СЂРѕР№СЃС‚РІР°РјРё";
 SUBDESIGN Chipset2
 (
 	/RESET							: INPUT;	%1%
 	D[7..0]							: BIDIR;	%8%
 	A[7..6]							: INPUT;	%8%
 	AH[19..14]						: INPUT;	%6%
-	/MREQ,/IORQ,/RD,/WR				: INPUT;	%4%
+	/MREQ,/IORQ,/RD,/WR					: INPUT;	%4%
 	/1x0							: INPUT;	%1%
 	/CSDSP							: OUTPUT;	%1%
 	/IOWR,/IORD						: OUTPUT;	%2%
 	/CSROM							: OUTPUT;
-	/CSRAM,/SLT1					: OUTPUT;	%2 = итого 32%
+	/CSRAM,/SLT1						: OUTPUT;	%2 = РёС‚РѕРіРѕ 32%
 	NCONFIG							: OUTPUT;
-	CONF_DONE,NSTATUS				: INPUT;
+	CONF_DONE,NSTATUS					: INPUT;
 )
 %******************************************%
 %
@@ -48,7 +48,7 @@ BEGIN
 	/IORD=!(!/IORQ & !/RD);
 
 %******************************************%
-% Порт управления 						   %
+% РџРѕСЂС‚ СѓРїСЂР°РІР»РµРЅРёСЏ 						   %
 %******************************************%
 	IRG[].clk=!/IOWR;
 	IRG[].d=D[4..0];
