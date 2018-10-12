@@ -19,3 +19,7 @@ Z8 - the keyboard controller
 ## CPU 
 
 Z180 - sound syntesizer central processor.
+
+## PCB
+
+![PCB photo](doc/PLATA.JPG)
