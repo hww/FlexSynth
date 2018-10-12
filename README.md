@@ -2,7 +2,7 @@
 
 Z180 and Altera FPGA based sound synthesizer
 
-[Photo]!doc/PHOTO.JPG
+![Photo](doc/PHOTO.JPG)
 
 ## FPGA
 
