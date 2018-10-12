@@ -2,6 +2,8 @@
 
 Z180 and Altera FPGA based sound synthesizer
 
+[Photo]doc/PHOTO.JPG
+
 ## FPGA
 
 chipset - Altera EPM7032 contains the "glue" for Z180 and other components 
